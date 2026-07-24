@@ -1,0 +1,14 @@
+numpy
+pandas
+geopandas
+rasterio
+xarray
+matplotlib
+scikit-learn
+imbalanced-learn
+xgboost
+lightgbm
+catboost
+shap
+jenkspy
+joblib
