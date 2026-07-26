@@ -100,9 +100,9 @@ pip install -r requirements.txt
 
 The scripts are intended to be executed in approximately the following order:
 
-1. `avg_rainfall.py`
-2. `Data.py`
-3. `Undersampling-algos.py` or `Oversampling-algos.py`
+1. `Data.py`
+2. `Undersampling-algos.py` or `Oversampling-algos.py`
+3. `avg_rainfall.py`
 4. `vulnerability.py`
 5. `riskmap.py`
 6. `plots.py`
