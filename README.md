@@ -50,7 +50,9 @@ The workflow includes:
 | **vulnerability.py** | Computes economic vulnerability (Degree of Loss × monetary value) per land-cover element. |
 | **riskmap.py** | Integrates hazard and vulnerability layers to generate the final landslide risk map. |
 
-# Notes
+---
+
+Notes:
 Scripts are exploratory (# %% cell-based), with hard-coded paths — shared for methodological transparency, not as a plug-and-run package.
 Raw inputs (IMD rainfall NetCDF, causative-factor rasters, landslide inventory) are not included due to size/data-sharing restrictions.
 
