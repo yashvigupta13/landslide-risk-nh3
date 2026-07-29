@@ -41,13 +41,30 @@ The workflow includes:
 
 | Script | Description |
 |---------|-------------|
-| **avg_rainfall.py** | Processes rainfall data from IMD Pune and creates rainfall-related datasets used for modelling. |
-| **Data.py** | Prepares the modelling dataset, including preprocessing, feature generation, train-test split, and data preparation for machine learning. |
-| **Undersampling-algos.py** | Implements the undersampling workflow using Tomek Links and trains the machine learning classifiers. |
-| **Oversampling-algos.py** | Implements the oversampling workflow using SMOTE and trains the machine learning classifiers. |
-| **vulnerability.py** | Computes the vulnerability layer from land-cover and road information and produces the vulnerability raster. |
-| **riskmap.py** | Integrates susceptibility, hazard, and vulnerability layers to generate the final landslide risk map. |
+
+| **Data.py** | Rainfall pipeline (30-yr maximum): NetCDF → GeoTIFFs → resample/clip → Jenks classification → Tomek/undersampling and SMOTE/oversampling train-test splits. |
+| **avg_rainfall.py** | Same pipeline using 30-yr average rainfall as an alternative factor. |
+| **Undersampling-algos.py** | Trains & tunes all 8 classifiers on the undersampled data; generates susceptibility probability maps and G-scores. |
+| **Oversampling-algos.py** | Trains & tunes all 8 classifiers on the oversampled data; generates susceptibility probability maps and G-scores. |
 | **plots.py** | Generates the figures and validation plots used for analysing model performance and susceptibility class distributions. |
+| **vulnerability.py** | Computes economic vulnerability (Degree of Loss × monetary value) per land-cover element. |
+| **riskmap.py** | Integrates hazard and vulnerability layers to generate the final landslide risk map. |
+
+# Notes
+Scripts are exploratory (# %% cell-based), with hard-coded paths — shared for methodological transparency, not as a plug-and-run package.
+Raw inputs (IMD rainfall NetCDF, causative-factor rasters, landslide inventory) are not included due to size/data-sharing restrictions.
+
+---
+
+Setup
+
+It's recommended to use a virtual environment before running any of the scripts:
+
+```bash
+python3 -m venv venv
+source venv/bin/activate      # Windows: venv\Scripts\activate.ps1
+pip install -r requirements.txt
+```
 
 ---
 
@@ -71,22 +88,11 @@ Both undersampling and oversampling strategies are provided.
 # Software Requirements
 
 Python 3.10 or later.
+QGIS 3.40 or later.
 
 Main packages:
 
-- numpy
-- pandas
-- matplotlib
-- rasterio
-- geopandas
-- xarray
-- scikit-learn
-- imbalanced-learn
-- xgboost
-- lightgbm
-- catboost
-- shap
-- jenkspy
+numpy, pandas, geopandas, rasterio, xarray, shapely, jenkspy, scikit-learn, imbalanced-learn, xgboost, catboost, lightgbm, matplotlib, plus GDAL (gdalwarp).
 
 Install dependencies using
 
