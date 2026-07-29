@@ -41,7 +41,6 @@ The workflow includes:
 
 | Script | Description |
 |---------|-------------|
-
 | **Data.py** | Rainfall pipeline (30-yr maximum): NetCDF → GeoTIFFs → resample/clip → Jenks classification → Tomek/undersampling and SMOTE/oversampling train-test splits. |
 | **avg_rainfall.py** | Same pipeline using 30-yr average rainfall as an alternative factor. |
 | **Undersampling-algos.py** | Trains & tunes all 8 classifiers on the undersampled data; generates susceptibility probability maps and G-scores. |
