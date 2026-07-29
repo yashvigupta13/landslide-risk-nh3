@@ -57,7 +57,14 @@ Raw inputs (IMD rainfall NetCDF, causative-factor rasters, landslide inventory) 
 
 ---
 
-Setup
+##Setup
+
+Python 3.10 or later.
+QGIS 3.40 or later.
+
+Main packages:
+
+numpy, pandas, geopandas, rasterio, xarray, shapely, jenkspy, scikit-learn, imbalanced-learn, xgboost, catboost, lightgbm, matplotlib, plus GDAL (gdalwarp).
 
 It's recommended to use a virtual environment before running any of the scripts:
 
@@ -86,23 +93,6 @@ Both undersampling and oversampling strategies are provided.
 
 ---
 
-# Software Requirements
-
-Python 3.10 or later.
-QGIS 3.40 or later.
-
-Main packages:
-
-numpy, pandas, geopandas, rasterio, xarray, shapely, jenkspy, scikit-learn, imbalanced-learn, xgboost, catboost, lightgbm, matplotlib, plus GDAL (gdalwarp).
-
-Install dependencies using
-
-```bash
-pip install -r requirements.txt
-```
-
----
-
 # Typical Workflow
 
 The scripts are intended to be executed in approximately the following order:
@@ -110,9 +100,9 @@ The scripts are intended to be executed in approximately the following order:
 1. `Data.py`
 2. `Undersampling-algos.py` or `Oversampling-algos.py`
 3. `avg_rainfall.py`
-4. `vulnerability.py`
-5. `riskmap.py`
-6. `plots.py`
+4. `plots.py`
+5. `vulnerability.py`
+6. `riskmap.py`
 
 ---
 
