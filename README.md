@@ -57,7 +57,7 @@ Raw inputs (IMD rainfall NetCDF, causative-factor rasters, landslide inventory) 
 
 ---
 
-##Setup
+## Setup
 
 Python 3.10 or later.
 QGIS 3.40 or later.
