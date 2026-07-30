@@ -72,7 +72,6 @@ It's recommended to use a virtual environment before running any of the scripts:
 python3 -m venv venv
 source venv/bin/activate      # Windows: venv\Scripts\activate.ps1
 pip install -r requirements.txt
-or conda env create -f environment.yml
 ```
 Alternatively:
 
