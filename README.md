@@ -120,14 +120,13 @@ The scripts generate:
 
 - Trained machine learning models
 - Performance statistics
-- ROC curves
+- Validation plots
 - Feature importance
 - SHAP analysis
 - Landslide susceptibility geotiff
 - Hazard geotiff
 - Vulnerability geotiff
 - Risk geotiff
-- Validation plots
 
 ---
 
