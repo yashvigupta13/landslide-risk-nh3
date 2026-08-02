@@ -55,6 +55,10 @@ Notes:
 Scripts are exploratory (# %% cell-based), with hard-coded paths — shared for methodological transparency, not as a plug-and-run package.
 Raw inputs (IMD rainfall NetCDF, causative-factor rasters, landslide inventory) are not included due to size/data-sharing restrictions.
 
+Raw inputs (IMD rainfall NetCDF, causative-factor rasters, landslide inventory) are not included due to size/data-sharing restrictions.
+
+These raw datasets were preprocessed (for example: IMD NetCDF → daily GeoTIFFs → yearly/30yr rasters, reprojection/resampling, clipping) before being used by the scripts.
+
 Note on coordinates: some input CSVs use column names `Latitude` / `Longitude` while actually
 containing projected easting/northing values (they were effectively flipped). The scripts
 treat `Latitude` as Easting and `Longitude` as Northing when sampling/clipping to handle this.
