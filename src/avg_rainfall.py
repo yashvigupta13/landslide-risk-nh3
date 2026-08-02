@@ -4,7 +4,6 @@ Created on Mon Mar 9 14:59:17 2026
 @author: yashvigupta
 """
 # %% Average rainfall imports and folder structure
-
 import os
 import re
 import rasterio
@@ -27,11 +26,12 @@ from sklearn.model_selection import train_test_split
 
 BASE_DIR = os.getcwd()
 
-DIR_RAW_NC   = "0_raw_netcdf"
-DIR_DAILY    = "1_daily_geotiff"
-DIR_YEARLY   = "2_yearly_avg"        # changed: avg instead of max
-DIR_30YR     = "3_30yr_avg"          # changed: avg instead of max
-DIR_CONT     = "4_continuous_30m"
+# Output folders used by the pipeline
+DIR_RAW_NC = "0_raw_netcdf"
+DIR_DAILY = "1_daily_geotiff"
+DIR_YEARLY = "2_yearly_avg"
+DIR_30YR = "3_30yr_avg"
+DIR_CONT = "4_continuous_30m"
 
 for d in [DIR_DAILY, DIR_YEARLY, DIR_30YR, DIR_CONT]:
     os.makedirs(d, exist_ok=True)
@@ -45,6 +45,7 @@ if not nc_files:
     raise RuntimeError("No NetCDF files found")
 
 for nc_file in nc_files:
+    # open dataset and find the rainfall variable (handles several common names)
     ds = xr.open_dataset(os.path.join(DIR_RAW_NC, nc_file), decode_times=False)
 
     for v in ["RAINFALL", "rf", "rainfall"]:
@@ -56,6 +57,7 @@ for nc_file in nc_files:
 
     rain = ds[rain_var]
 
+    # coordinate names vary between datasets; fall back to common alternatives
     lat = "LATITUDE" if "LATITUDE" in ds.coords else "lat"
     lon = "LONGITUDE" if "LONGITUDE" in ds.coords else "lon"
     time = "TIME" if "TIME" in ds.coords else "time"
@@ -64,11 +66,12 @@ for nc_file in nc_files:
     lons = ds[lon].values
     times = rain[time].values
 
+    # build related transform from lon/lat grid spacing
     xres = abs(lons[1] - lons[0])
     yres = abs(lats[1] - lats[0])
-
     transform = from_origin(lons.min(), lats.max(), xres, yres)
 
+    # export each timestep as a GeoTIFF
     for i, t in enumerate(times):
         date = str(t)[:10]
         out = f"{nc_file.replace('.nc','')}_{date}.tif"
@@ -76,9 +79,11 @@ for nc_file in nc_files:
 
         data = rain.isel({time: i}).values.astype("float32")
 
+        # ensure raster row order matches rasterio's expectation
         if lats[0] < lats[-1]:
             data = np.flipud(data)
 
+        # skip fully-empty timesteps
         if np.all(np.isnan(data)):
             continue
 
@@ -101,20 +106,20 @@ for nc_file in nc_files:
 print("STEP 1 COMPLETED")
 
 # %% YEARLY AVERAGE
-# Changed: compute mean daily rainfall per year instead of single-day max.
-# This gives the average daily rainfall value for each pixel in each year,
-# which is then averaged again across years in Step 3.
-
+# Compute mean daily rainfall per pixel for each year by summing valid
+# days and dividing by the count of valid observations (handles nodata).
 print("\n===== YEARLY AVERAGE =====\n")
 
 files_by_year = defaultdict(list)
 
+# group daily files by year (filename pattern expected to include 'indYYYY')
 for f in os.listdir(DIR_DAILY):
     m = re.search(r"ind(\d{4})", f)
     if m:
         files_by_year[m.group(1)].append(os.path.join(DIR_DAILY, f))
 
 for year, files in sorted(files_by_year.items()):
+    # accumulate sum and count to compute pixelwise mean robustly
     sum_data, count_data, meta, nodata = None, None, None, -999
 
     for f in files:
@@ -124,14 +129,14 @@ for year, files in sorted(files_by_year.items()):
             data[data == nodata] = np.nan
 
             if sum_data is None:
-                sum_data   = np.where(np.isnan(data), 0.0, data)
-                count_data = np.where(np.isnan(data), 0,   1).astype("int32")
+                sum_data = np.where(np.isnan(data), 0.0, data)
+                count_data = np.where(np.isnan(data), 0, 1).astype("int32")
                 meta = src.meta.copy()
             else:
-                sum_data   += np.where(np.isnan(data), 0.0, data)
-                count_data += np.where(np.isnan(data), 0,   1)
+                sum_data += np.where(np.isnan(data), 0.0, data)
+                count_data += np.where(np.isnan(data), 0, 1)
 
-    # Compute mean; pixels with no valid observations stay nodata
+    # pixelwise mean; leave pixels with zero observations as nodata
     with np.errstate(invalid="ignore"):
         avg_data = np.where(count_data > 0, sum_data / count_data, np.nan)
 
@@ -147,8 +152,7 @@ for year, files in sorted(files_by_year.items()):
 print("STEP 2 COMPLETED")
 
 # %% 30-YEAR AVERAGE
-# Changed: mean of yearly averages across all years instead of nanmax.
-
+# Average the per-year rasters across all years (pixelwise nanmean).
 print("\n===== 30-YEAR AVERAGE =====\n")
 
 files = sorted(os.path.join(DIR_YEARLY, f) for f in os.listdir(DIR_YEARLY))
@@ -163,9 +167,9 @@ for f in files:
         d[d == nodata] = np.nan
         stack.append(d)
 
-stack  = np.stack(stack)
-avg30  = np.nanmean(stack, axis=0)          # changed: nanmean instead of nanmax
-avg30  = np.where(np.isnan(avg30), nodata, avg30)
+stack = np.stack(stack)
+avg30 = np.nanmean(stack, axis=0)
+avg30 = np.where(np.isnan(avg30), nodata, avg30)
 
 out = os.path.join(DIR_30YR, "rainfall_30yr_AVG.tif")
 with rasterio.open(out, "w", **meta) as dst:
@@ -183,29 +187,32 @@ subprocess.run([
     '-dstnodata', '-999',
     '-multi',
     '-wm', '2048',
-    '3_30yr_avg/rainfall_30yr_AVG.tif',                  # changed input path
-    '4_continuous_30m/rainfall_30yr_AVG_30m.tif'         # changed output name
+    '3_30yr_avg/rainfall_30yr_AVG.tif',
+    '4_continuous_30m/rainfall_30yr_AVG_30m.tif'
 ], check=True)
 
 # %% Clip Rainfall Raster to CSV AOI (Buffered Box Clip)
 
 print("\n===== CLIP TO REGION (WITH SAFETY BUFFER) =====\n")
 
-CSV_POINTS   = "row_truncated_data.csv"
-INPUT_RASTER = "4_continuous_30m/rainfall_30yr_AVG_30m.tif"        # changed
-OUTPUT_RASTER= "4_continuous_30m/rainfall_30yr_AVG_30m_clipped.tif" # changed
+CSV_POINTS = "row_truncated_data.csv"
+INPUT_RASTER = "4_continuous_30m/rainfall_30yr_AVG_30m.tif"
+OUTPUT_RASTER = "4_continuous_30m/rainfall_30yr_AVG_30m_clipped.tif"
 
 PIXEL_SIZE = 30.0
-BUFFER     = PIXEL_SIZE
-NODATA     = -999
+BUFFER = PIXEL_SIZE
+NODATA = -999
 
+# read sample points CSV and compute a buffered bounding box in the raster CRS
 df = pd.read_csv(CSV_POINTS)
 
-eastings  = df["Latitude"].values   # Easting (meters) — column naming as per original
-northings = df["Longitude"].values  # Northing (meters)
+# note: the CSV uses columns named 'Latitude'/'Longitude' but they represent
+# easting/northing coordinates in the project's projected CRS
+eastings = df["Latitude"].values
+northings = df["Longitude"].values
 
-minx = eastings.min()  - BUFFER
-maxx = eastings.max()  + BUFFER
+minx = eastings.min() - BUFFER
+maxx = eastings.max() + BUFFER
 miny = northings.min() - BUFFER
 maxy = northings.max() + BUFFER
 
@@ -240,13 +247,14 @@ print("Loading CSV...")
 df = pd.read_csv(CSV_IN)
 print("Rows:", len(df))
 
+# sample the continuous 30m raster at each coordinate and collect values
 with rasterio.open(RASTER) as ds:
     rainfall = []
-    missing  = 0
+    missing = 0
 
     for _, row in df.iterrows():
-        x = row["Latitude"]     # EASTING
-        y = row["Longitude"]    # NORTHING
+        x = row["Latitude"]
+        y = row["Longitude"]
 
         val = list(ds.sample([(x, y)]))[0][0]
 
@@ -256,7 +264,7 @@ with rasterio.open(RASTER) as ds:
         else:
             rainfall.append(val)
 
-df["Rainfall_30yr_AVG_CONT"] = rainfall   # changed column name
+df["Rainfall_30yr_AVG_CONT"] = rainfall
 
 print("\n===== SUMMARY =====")
 print("Valid rainfall:", df["Rainfall_30yr_AVG_CONT"].notna().sum())
@@ -279,14 +287,17 @@ N_CLASSES = 6
 df_proc = pd.read_csv(CSV_PROCESSED)
 df_rain = pd.read_csv(CSV_RAIN)
 
+rainfall = df_rain[RAIN_COL].values
+breaks = jenkspy.jenks_breaks(rainfall, n_classes=N_CLASSES)
 print("\n===== JENKS CLASSIFICATION (RAINFALL) =====")
 print("Processed rows:", len(df_proc))
 print("Rainfall rows :", len(df_rain))
 
 assert len(df_proc) == len(df_rain), "Row count mismatch!"
 
+# ensure rows are aligned between the two input CSVs
 coord_match = (
-    (df_proc["Latitude"].values  == df_rain["Latitude"].values) &
+    (df_proc["Latitude"].values == df_rain["Latitude"].values) &
     (df_proc["Longitude"].values == df_rain["Longitude"].values)
 )
 assert coord_match.all(), "Latitude / Longitude mismatch between files!"
@@ -294,6 +305,7 @@ print("✓ Coordinate alignment confirmed")
 
 rainfall = df_rain[RAIN_COL].values
 
+# compute Jenks natural breaks and assign class labels
 breaks = jenkspy.jenks_breaks(rainfall, n_classes=N_CLASSES)
 
 print("\nJenks break values:")
@@ -320,6 +332,9 @@ print("✓ Output written to:", CSV_OUT)
 # %% Tomek Links + Random Undersampling
 # (unchanged — operates on features only, agnostic to avg vs max)
 
+# %% Tomek Links + Random Undersampling
+# Undersampling pipeline: first remove borderline samples with Tomek Links,
+# then randomly undersample the majority class to match the minority.
 print("\n===== TOMEK LINKS + UNDERSAMPLING =====\n")
 
 CSV_IN = "processed1_truncated_data_with_rainfall_jenks.csv"
