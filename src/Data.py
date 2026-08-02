@@ -1,4 +1,3 @@
-
 # %% Rainfall imports and folder structure
 
 import os
@@ -12,7 +11,7 @@ from imblearn.over_sampling import SMOTE
 from sklearn.model_selection import train_test_split
 
 
-def compute_jenks(df_proc, df_rain, rain_col="Rainfall_30yr_AVG_CONT", n_classes=6):
+def compute_jenks(df_proc, df_rain, rain_col="Rainfall_30yr_MAX_CONT", n_classes=6):
     """Compute Jenks natural breaks on rainfall values and attach class labels.
 
     Returns the updated `df_proc` with a `Rainfall_Jenks` column.
@@ -108,9 +107,9 @@ def undersample_and_split(df_in, out_prefix="", oversample_out_dir="Train-test-s
 
 def main():
     parser = argparse.ArgumentParser(description="Simplified data prep from processed CSV")
-    parser.add_argument("--processed", default="processed1_truncated_data.csv", help="Processed CSV (default: processed1_truncated_data.csv)")
+    parser.add_argument("--processed", default="src/processed1_truncated_data_with_rainfall_jenks.csv", help="Processed CSV (default: src/processed1_truncated_data_with_rainfall_jenks.csv)")
     parser.add_argument("--rain", required=False, help="Optional rainfall CSV to compute Jenks classes")
-    parser.add_argument("--rain-col", default="Rainfall_30yr_AVG_CONT", help="Rainfall column name in the rainfall CSV")
+    parser.add_argument("--rain-col", default="Rainfall_30yr_MAX_CONT", help="Rainfall column name in the rainfall CSV")
     parser.add_argument("--out-prefix", default="", help="Prefix for saved X/Y files (default: current dir)")
     args = parser.parse_args()
 
@@ -139,170 +138,9 @@ def main():
 if __name__ == "__main__":
     main()
 
-# TRAIN / TEST SPLIT (STRATIFIED)
-# ---------------------------------------------
-X_final = df_balanced.drop(columns=["Latitude", "Longitude", "Landslide"])
-Y_final = df_balanced["Landslide"]
+# Note: the previous top-level procedural pipeline (train/test split and
+# oversampling) has been removed from top-level execution. Use the
+# `undersample_and_split()` function and call this module via the CLI.
 
-X_train, X_test, Y_train, Y_test = train_test_split(
-    X_final,
-    Y_final,
-    test_size=0.30,
-    random_state=1,
-    stratify=Y_final
-)
-
-# ---------------------------------------------
-# SAVE LAT/LON WITH LABELS (FOR MAPPING)
-# ---------------------------------------------
-Y_train_out = pd.concat(
-    [
-        Y_train.reset_index(drop=True),
-        df_balanced.loc[Y_train.index, ["Latitude", "Longitude"]].reset_index(drop=True)
-    ],
-    axis=1
-)
-
-Y_test_out = pd.concat(
-    [
-        Y_test.reset_index(drop=True),
-        df_balanced.loc[Y_test.index, ["Latitude", "Longitude"]].reset_index(drop=True)
-    ],
-    axis=1
-)
-
-# ---------------------------------------------
-# FINAL SANITY CHECKS
-# ---------------------------------------------
-print("\nNaN checks:")
-print("X_train:", X_train.isna().values.any())
-print("Y_train:", Y_train_out.isna().values.any())
-print("X_test :", X_test.isna().values.any())
-print("Y_test :", Y_test_out.isna().values.any())
-
-# ---------------------------------------------
-# SAVE FILES
-# ---------------------------------------------
-X_train.to_csv("X_train.csv", index=False)
-X_test.to_csv("X_test.csv", index=False)
-Y_train_out.to_csv("Y_train.csv", index=False)
-Y_test_out.to_csv("Y_test.csv", index=False)
-
-print("\n✓ Files written successfully:")
-print("  X_train.csv")
-print("  X_test.csv")
-print("  Y_train.csv")
-print("  Y_test.csv")
-
-# %% OVERSAMPLING 
-
-CSV_IN = "processed1_truncated_data_with_rainfall_jenks.csv"
-OUT_DIR = "Train-test-split-oversampling"
-
-os.makedirs(OUT_DIR, exist_ok=True)
-
-print("\n" + "="*80)
-print("OVERSAMPLING: LOADING DATA")
-print("="*80)
-
-df = pd.read_csv(CSV_IN)
-
-# Remove unwanted index column if present
-if "Unnamed: 0" in df.columns:
-    df.drop(columns=["Unnamed: 0"], inplace=True)
-
-print("Total rows:", len(df))
-print("\nOriginal Landslide distribution:")
-print(df["Landslide"].value_counts())
-
-if "Rainfall_Jenks" in df.columns:
-    print("\nRainfall Jenks distribution:")
-    print(df["Rainfall_Jenks"].value_counts().sort_index())
-
-print("\nNaN check (entire dataset):", df.isna().sum().sum())
-
-# %% FEATURE / LABEL SPLIT (OVERSAMPLING)
-
-print("\nPreparing features and labels...")
-
-coords = df[["Latitude", "Longitude"]].copy()
-
-X = df.drop(columns=["Latitude", "Longitude", "Landslide"])
-y = df["Landslide"]
-
-print("X shape:", X.shape)
-print("y shape:", y.shape)
-
-# %% STRATIFIED TRAIN–TEST SPLIT (BEFORE SMOTE)
-
-print("\n" + "="*80)
-print("TRAIN–TEST SPLIT (ORIGINAL IMBALANCED DATA)")
-print("="*80)
-
-X_train_orig, X_test, y_train_orig, y_test = train_test_split(
-    X,
-    y,
-    test_size=0.30,
-    random_state=1,
-    stratify=y
-)
-
-print("\nTrain distribution (BEFORE SMOTE):")
-print(y_train_orig.value_counts())
-
-print("\nTest distribution (UNCHANGED):")
-print(y_test.value_counts())
-
-# %% APPLY SMOTE (TRAINING SET ONLY)
-
-print("\n" + "="*80)
-print("APPLYING SMOTE (TRAIN ONLY)")
-print("="*80)
-
-smote = SMOTE(
-    sampling_strategy="auto",
-    random_state=1,
-    k_neighbors=5
-)
-
-X_train, y_train = smote.fit_resample(X_train_orig, y_train_orig)
-
-print("\nTrain distribution (AFTER SMOTE):")
-print(pd.Series(y_train).value_counts())
-
-print("Synthetic samples added:", len(X_train) - len(X_train_orig))
-
-print("\n" + "="*80)
-print("FINAL SANITY CHECKS")
-print("="*80)
-
-print("NaN checks:")
-print("X_train:", X_train.isna().values.any())
-print("X_test :", X_test.isna().values.any())
-print("y_train:", pd.Series(y_train).isna().any())
-print("y_test :", y_test.isna().any())
-
-assert list(X_train.columns) == list(X_test.columns), "Feature mismatch!"
-print("✓ Feature alignment confirmed")
-
-print("\n" + "="*80)
-print("SAVING OVERSAMPLING FILES")
-print("="*80)
-
-Y_train = pd.DataFrame(y_train, columns=["Landslide"])
-Y_test  = pd.DataFrame(y_test).reset_index(drop=True)
-
-X_train.to_csv(f"{OUT_DIR}/X_train_smote.csv", index=False)
-X_test.to_csv(f"{OUT_DIR}/X_test_smote.csv", index=False)
-Y_train.to_csv(f"{OUT_DIR}/Y_train_smote.csv", index=False)
-Y_test.to_csv(f"{OUT_DIR}/Y_test_smote.csv", index=False)
-
-print("✓ Files written:")
-print("  X_train_smote.csv")
-print("  X_test_smote.csv")
-print("  Y_train_smote.csv")
-print("  Y_test_smote.csv")
-
-print("\n" + "="*80)
-print("OVERSAMPLING PIPELINE COMPLETE")
-print("="*80)
+# Example:
+# python src/Data.py --processed src/processed1_truncated_data_with_rainfall_jenks.csv --rain-col Rainfall_30yr_MAX_CONT
