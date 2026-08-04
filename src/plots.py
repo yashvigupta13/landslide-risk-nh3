@@ -33,7 +33,7 @@ def compute_ratios_from_csv(
 
     return ls_ratio.values, area_ratio.values
 
-processed_csv = "processed1_truncated_data.csv"
+processed_csv = "processed1_truncated_data_with_rainfall_jenks.csv"
 
 # Compute proportional landslide and area ratios for three model outputs
 xgb_ls, xgb_area = compute_ratios_from_csv(
