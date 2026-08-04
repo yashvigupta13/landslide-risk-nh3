@@ -41,7 +41,7 @@ The workflow includes:
 
 | Script | Description |
 |---------|-------------|
-| **Data.py** | Rainfall pipeline (30-yr maximum): NetCDF → GeoTIFFs → resample/clip → Jenks classification → Tomek/undersampling and SMOTE/oversampling train-test splits. |
+| **Data.py** | Rainfall data pipeline (30-yr maximum): Tomek link undersampling and SMOTE oversampling train-test splits. |
 | **avg_rainfall.py** | Same pipeline using 30-yr average rainfall as an alternative factor. |
 | **Undersampling-algos.py** | Trains & tunes all 8 classifiers on the undersampled data; generates susceptibility probability maps and G-scores. |
 | **Oversampling-algos.py** | Trains & tunes all 8 classifiers on the oversampled data; generates susceptibility probability maps and G-scores. |
@@ -53,7 +53,6 @@ The workflow includes:
 
 Notes:
 Scripts are exploratory (# %% cell-based), with hard-coded paths — shared for methodological transparency, not as a plug-and-run package.
-Raw inputs (IMD rainfall NetCDF, causative-factor rasters, landslide inventory) are not included due to size/data-sharing restrictions.
 
 Raw inputs (IMD rainfall NetCDF, causative-factor rasters, landslide inventory) are not included due to size/data-sharing restrictions.
 
@@ -112,8 +111,8 @@ Both undersampling and oversampling strategies are provided.
 The scripts are intended to be executed in approximately the following order:
 
 1. `Data.py`
-2. `Undersampling-algos.py` or `Oversampling-algos.py`
-3. `avg_rainfall.py`
+2. `avg_rainfall.py` (alternatively to Data.py)
+3. `Undersampling-algos.py` or `Oversampling-algos.py`
 4. `plots.py`
 5. `vulnerability.py`
 6. `riskmap.py`
