@@ -122,9 +122,13 @@ The scripts are intended to be executed in approximately the following order:
 
 # Data
 
-The workflow requires several geospatial datasets, including:
+The complete datasets used in this study are **not included** in this repository because they are either:
 
-(Data / Availability Statement)
+- large geospatial datasets (GeoTIFF, NetCDF),
+- obtained from third-party sources,
+- or subject to institutional restrictions.
+
+This repository instead provides required truncated dataset for demonstrating the workflow.
 
 ---
 
