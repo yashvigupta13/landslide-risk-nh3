@@ -169,9 +169,6 @@ fpr, tpr, _ = roc_curve(y_test == 2, y_test_prob)
 roc_data['Logistic Regression'] = {'fpr': fpr, 'tpr': tpr, 'auc': test_auc}
 
 coefficients = np.abs(lr_model.coef_[0])
-feature_importance_dict['Logistic Regression'] = pd.DataFrame({
-    'Feature': train_features, 'Importance': coefficients
-}).sort_values('Importance', ascending=False)
 
 with open('results/best_params_LogisticRegression.json', 'w') as f:
     json.dump(best_params, f, indent=4)
@@ -252,10 +249,6 @@ results_dict['best_params'].append(best_params)
 
 fpr, tpr, _ = roc_curve(y_test == 2, y_test_prob)
 roc_data['Decision Tree'] = {'fpr': fpr, 'tpr': tpr, 'auc': test_auc}
-
-feature_importance_dict['Decision Tree'] = pd.DataFrame({
-    'Feature': train_features, 'Importance': dt_model.feature_importances_
-}).sort_values('Importance', ascending=False)
 
 with open('results/best_params_DecisionTree.json', 'w') as f:
     json.dump(best_params, f, indent=4)
@@ -338,10 +331,6 @@ results_dict['best_params'].append(best_params)
 fpr, tpr, _ = roc_curve(y_test == 2, y_test_prob)
 roc_data['Random Forest'] = {'fpr': fpr, 'tpr': tpr, 'auc': test_auc}
 
-feature_importance_dict['Random Forest'] = pd.DataFrame({
-    'Feature': train_features, 'Importance': rf_model.feature_importances_
-}).sort_values('Importance', ascending=False)
-
 with open('results/best_params_RandomForest.json', 'w') as f:
     json.dump(best_params, f, indent=4)
 
@@ -419,10 +408,6 @@ results_dict['best_params'].append(best_params)
 
 fpr, tpr, _ = roc_curve(y_test == 2, y_test_prob)
 roc_data['AdaBoost'] = {'fpr': fpr, 'tpr': tpr, 'auc': test_auc}
-
-feature_importance_dict['AdaBoost'] = pd.DataFrame({
-    'Feature': train_features, 'Importance': ada_model.feature_importances_
-}).sort_values('Importance', ascending=False)
 
 with open('results/best_params_AdaBoost.json', 'w') as f:
     json.dump(best_params, f, indent=4)
@@ -507,10 +492,6 @@ results_dict['best_params'].append(best_params)
 
 fpr, tpr, _ = roc_curve(y_test == 2, y_test_prob)
 roc_data['Extra Trees'] = {'fpr': fpr, 'tpr': tpr, 'auc': test_auc}
-
-feature_importance_dict['Extra Trees'] = pd.DataFrame({
-    'Feature': train_features, 'Importance': et_model.feature_importances_
-}).sort_values('Importance', ascending=False)
 
 with open('results/best_params_ExtraTrees.json', 'w') as f:
     json.dump(best_params, f, indent=4)
@@ -614,10 +595,6 @@ results_dict['best_params'].append(best_params)
 fpr, tpr, _ = roc_curve(y_test_bin, y_test_prob)
 roc_data['XGBoost'] = {'fpr': fpr, 'tpr': tpr, 'auc': test_auc}
 
-feature_importance_dict['XGBoost'] = pd.DataFrame({
-    'Feature': train_features, 'Importance': xgb_model.feature_importances_
-}).sort_values('Importance', ascending=False)
-
 with open('results/best_params_XGBoost.json', 'w') as f:
     json.dump(best_params, f, indent=4)
 
@@ -675,10 +652,6 @@ results_dict['best_params'].append(best_params)
 
 fpr, tpr, _ = roc_curve(y_test_bin, y_test_prob)
 roc_data['CatBoost'] = {'fpr': fpr, 'tpr': tpr, 'auc': test_auc}
-
-feature_importance_dict['CatBoost'] = pd.DataFrame({
-    'Feature': train_features, 'Importance': cat_model.get_feature_importance()
-}).sort_values('Importance', ascending=False)
 
 with open('results/best_params_CatBoost.json', 'w') as f:
     json.dump({'note': best_params}, f, indent=4)
@@ -765,10 +738,6 @@ results_dict['best_params'].append(best_params)
 fpr, tpr, _ = roc_curve(y_test_bin, y_test_prob)
 roc_data['LightGBM'] = {'fpr': fpr, 'tpr': tpr, 'auc': test_auc}
 
-feature_importance_dict['LightGBM'] = pd.DataFrame({
-    'Feature': train_features, 'Importance': lgbm_model.feature_importances_
-}).sort_values('Importance', ascending=False)
-
 with open('results/best_params_LightGBM.json', 'w') as f:
     json.dump(best_params, f, indent=4)
 
@@ -822,34 +791,6 @@ plt.savefig('figures/combined_auroc.png', dpi=300, bbox_inches='tight')
 print("Combined AUROC plot saved to: figures/combined_auroc.png")
 plt.close()
 
-# %% FEATURE IMPORTANCE PLOTS
-
-print("\n" + "="*70)
-print("CREATING FEATURE IMPORTANCE PLOTS")
-print("="*70)
-
-for model_name, importance_df in feature_importance_dict.items():
-
-    csv_filename = f"results/feature_importance_{model_name.replace(' ', '')}.csv"
-    importance_df.to_csv(csv_filename, index=False)
-    print(f"Feature importance saved: {csv_filename}")
-
-    plt.figure(figsize=(10, 8))
-    top_features = importance_df.head(15)
-
-    plt.barh(range(len(top_features)), top_features['Importance'], color='steelblue')
-    plt.yticks(range(len(top_features)), top_features['Feature'])
-    plt.xlabel('Importance', fontsize=12)
-    plt.ylabel('Feature', fontsize=12)
-    plt.title(f'Feature Importance - {model_name}', fontsize=14, fontweight='bold')
-    plt.gca().invert_yaxis()
-    plt.grid(axis='x', alpha=0.3)
-    plt.tight_layout()
-
-    fig_filename = f"figures/feature_importance_{model_name.replace(' ', '')}.png"
-    plt.savefig(fig_filename, dpi=300, bbox_inches='tight')
-    print(f"Feature importance plot saved: {fig_filename}")
-    plt.close()
 
 # %% FINAL SUMMARY
 
@@ -859,7 +800,5 @@ print("="*70)
 print("\nAll results saved to:")
 print("  - results/auroc_summary.csv")
 print("  - results/best_params_<model>.json")
-print("  - results/feature_importance_<model>.csv")
 print("  - figures/combined_auroc.png")
-print("  - figures/feature_importance_<model>.png")
 print("\n" + "="*70)
