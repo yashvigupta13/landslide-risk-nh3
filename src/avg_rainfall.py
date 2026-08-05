@@ -26,7 +26,7 @@ from sklearn.model_selection import train_test_split
 
 # %% Tomek Links + Random Undersampling
 # Undersampling pipeline: first remove borderline samples with Tomek Links,
-# then randomly undersample the majority class to match the minority.
+# Then randomly undersample the majority class to match the minority.
 print("\n===== TOMEK LINKS + UNDERSAMPLING =====\n")
 
 CSV_IN = "processed1_truncated_data_with_rainfall_jenks.csv"
