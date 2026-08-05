@@ -6,6 +6,7 @@ from rasterio.warp import reproject, Resampling
 # VULNERABILITY VALUES (FROM YOUR FINAL TABLE)
 # --------------------------------------------------
 
+
 vulnerability_lookup = {
     "Cropland": 0.000412811292750107,
     "Barren land": 0.0,
