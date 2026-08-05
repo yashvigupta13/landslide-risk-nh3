@@ -23,7 +23,7 @@ The repository implements an end-to-end geospatial machine learning workflow for
 
 National Highway-34 (NH-34), buffer 3km on both sides, Uttarakhand, India.
 
-## Workflow
+# Workflow
 The workflow includes:
 
 - Rainfall preprocessing from NetCDF data
@@ -64,7 +64,7 @@ treat `Latitude` as Easting and `Longitude` as Northing when sampling/clipping t
 
 ---
 
-## Setup
+# Setup
 
 Python 3.10 or later.
 QGIS 3.40 or later.
@@ -89,6 +89,69 @@ conda install -r requirements.txt
 
 ---
 
+
+# Data
+
+The complete datasets used in this study are **not included** in this repository because they are either:
+
+- large geospatial datasets (GeoTIFF, NetCDF) that exceed Github limit,
+- obtained from third-party sources,
+- or subject to institutional restrictions.
+
+This repository instead provides required truncated subset (~200,000 rows) of the full study dataset for demonstrating the workflow.
+
+Data File: ‘processed1_truncated_data_with_rainfall_jenks.csv’
+
+This is the input data file for this repository, and the point at which the code pipeline begins. It can be found in the 'src' folder. 
+It is a fully processed dataset. Every causative factor has already been extracted, discretized, and merged into a single table, one row per sample point (raster pixel location).
+
+The full dataset used to generate the results reported in the manuscript contains 1,218,552 total samples, of which 5,928 are landslide pixels and 1,212,624 are non-landslide pixels (~205:1 class imbalance). Because this is a subset, the class distribution and any metrics reproduced from this file will not exactly match the published results. 
+
+‘Data.py’ and ‘avg_rainfall.py’ both take this CSV directly as input and carry out class-imbalance handling. ‘Undersampling-algos.py’ and ‘Oversampling-algos.py’ further carry out model training/tuning, evaluation, and susceptibility-map generation. ‘plots.py,’ ‘vulnerability.py,’ and ‘riskmap.py’ consume outputs generated further downstream.
+
+Column reference
+
+| Column | Description | Encoding |
+|---------|-------------|-------------|
+| **Unnamed: 0** | Pandas row index carried over from a prior export step | Integer, no analytical meaning — safe to drop (scripts do this automatically) |
+| **Latitude** | Despite the name, this is the UTM Easting (X) coordinate, not geographic latitude | Meters, EPSG:32644 (UTM Zone 44N) |
+| **Longitude** | Despite the name, this is the UTM Northing (Y) coordinate, not geographic longitude | Meters, EPSG:32644 (UTM Zone 44N) |
+| **Lithology** | Rock type at the sample location (from Geological Survey of India map) | 1 = Phyllite, 2 = Sandstone with shale, 3 = Sandstone, 4 = Unconsolidated sediments, 5 = Shale with limestone, 6 = Granite, 7 = Quartzite, 8 = Quartzite alternating with shale, 9 = Dolomite, 10 = Limestone |
+| **Land_Cover** | Land cover class at the sample location | 1 = Cropland/Agricultural land, 2 = Waterbody, 3 = Settlement, 4 = Barren land, 5 = High/Dense vegetation (forest), 6 = Moderate vegetation (grassland), 7 = Low vegetation (grassland) |
+| **Plan_Curvature** | Plan curvature of the terrain (DEM derivative) | Ordinal class, 6-class natural breaks: 1 = most concave, 6 = most convex |
+| **Profile_Curvature** | Profile curvature of the terrain (DEM derivative) | Ordinal class, 6-class natural breaks: 1 = most concave, 6 = most convex |
+| **Aspect** | Slope aspect (compass direction the terrain faces) | 1 = Flat, 2 = North, 3 = Northeast, 4 = East, 5 = Southeast, 6 = South, 7 = Southwest, 8 = West, 9 = Northwest |
+| **Fault** | Euclidean distance-buffer band from the nearest geological fault line | Ordinal class, 6 bands at 50 m intervals: 1 (≤50 m) → 6 (>250 m, up to 300 m band) |
+| **River** | Euclidean distance-buffer band from the nearest river | Ordinal class, 6 bands at 40 m intervals: 1 (≤40 m) → 6 (>200 m, up to 240 m band) |
+| **Road** | Euclidean distance-buffer band from the nearest road | Ordinal class, 6 bands at 40 m intervals: 1 (≤40 m) → 6 (>200 m, up to 240 m band) |
+| **Dem** | Elevation (from Digital Elevation Model) | Ordinal class, 6-class natural breaks: 1 (≤887 m) → 6 (>3457 m) |
+| **Slope** | Terrain slope angle (degrees) | Ordinal class, 6-class natural breaks: 1 (≤10.9°) → 6 (>47.3°) |
+| **TWI** | Topographic Wetness Index | Ordinal class, 6-class natural breaks: 1 (≤3.38) → 6 (>13.65) |
+| **STI** | Sediment Transport Index | Ordinal class, 6-class natural breaks: 1 (≤0) → 6 (>4.51) |
+| **SPI** | Stream Power Index | Ordinal class, 6-class natural breaks: 1 (≤0) → 6 (>31.37) |
+| **Slope_Length** | Slope length (meters) | Ordinal class, 6-class natural breaks: 1 (≤0) → 6 (>345.67 m) |
+| **Landslide** | Ground-truth label — landslide occurrence at this point | 1 = No landslide, 2 = Landslide |
+| **Rainfall_Jenks** | 30-year rainfall factor (maximum or average daily rainfall, depending on which pipeline generated the file. See Data.py vs avg_rainfall.py), classified via jenkspy | Ordinal class 1–6, Jenks natural breaks (thresholds computed dynamically from the rainfall raster, not fixed) |
+
+Notes:
+•	For all "natural breaks" columns above, class 1 = lowest value range, class 6 = highest value range, of the underlying continuous variable at that location. Direction of association with landslide risk varies by factor (see manuscript SHAP analysis for feature-level interpretation).
+•	Input CSV uses column names `Latitude` / `Longitude` while actually containing projected Easting/Northing values purely for compatibility with earlier processing steps; treat them as projected UTM 44N coordinates, not WGS84 lat/lon. The scripts treat `Latitude` as Easting and `Longitude` as Northing when sampling/clipping to handle this.
+
+---
+
+# Typical Workflow
+
+The scripts are intended to be executed in approximately the following order:
+
+1. `Data.py`
+2. `avg_rainfall.py` (alternatively to Data.py)
+3. `Undersampling-algos.py` or `Oversampling-algos.py`
+4. `plots.py`
+5. `vulnerability.py`
+6. `riskmap.py`
+
+---
+
 # Machine Learning Models
 
 The repository includes implementations of:
@@ -106,30 +169,6 @@ Both undersampling and oversampling strategies are provided.
 
 ---
 
-# Typical Workflow
-
-The scripts are intended to be executed in approximately the following order:
-
-1. `Data.py`
-2. `avg_rainfall.py` (alternatively to Data.py)
-3. `Undersampling-algos.py` or `Oversampling-algos.py`
-4. `plots.py`
-5. `vulnerability.py`
-6. `riskmap.py`
-
----
-
-# Data
-
-The complete datasets used in this study are **not included** in this repository because they are either:
-
-- large geospatial datasets (GeoTIFF, NetCDF),
-- obtained from third-party sources,
-- or subject to institutional restrictions.
-
-This repository instead provides required truncated dataset for demonstrating the workflow.
-
----
 
 # Outputs
 
