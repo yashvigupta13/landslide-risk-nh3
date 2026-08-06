@@ -43,6 +43,7 @@ All code and data files can be found in the 'src' folder.
 
 | Script | Description |
 |---------|-------------|
+| **quick_test.py** | Minimal standalone test: undersampling + Logistic Regression only. For quick verification. |
 | **Data.py** | Rainfall data pipeline (30-yr maximum): Tomek link undersampling and SMOTE oversampling train-test splits. |
 | **avg_rainfall.py** | Same NetCDF→raster pipeline as Data.py but using 30-yr *average* daily rainfall instead of max. |
 | **Undersampling-algos.py** | Trains & tunes all 8 classifiers on the undersampled data. |
@@ -62,6 +63,13 @@ Raw inputs (IMD rainfall NetCDF, causative-factor rasters, landslide inventory) 
 These raw datasets were preprocessed (for example: IMD NetCDF → daily GeoTIFFs → yearly/30yr rasters, reprojection/resampling, clipping) and before being used by the scripts.
 
 `analysis.py` writes its outputs (SHAP tables/plots, probability maps, Jenks-classified maps, G-score summaries) to a `feature/` directory, created automatically if it doesn't exist. This is also where `plots.py` looks for its input files.
+
+---
+# Quick Test
+
+For a fast sanity check of the pipeline without running full model training:
+
+`quick_test.py` : runs end-to-end from `processed1_truncated_data_with_rainfall_jenks.csv` alone (Tomek Links undersampling → Logistic Regression), using the verified best parameters. No pre-generated train/test files needed.
 
 ---
 
@@ -101,7 +109,7 @@ The complete datasets used in this study are **not included** in this repository
 
 This repository instead provides required truncated subset (~200,000 rows) of the full study dataset for demonstrating the workflow.
 
-Data File: ‘processed1_truncated_data_with_rainfall_jenks.csv’
+**Data File: ‘processed1_truncated_data_with_rainfall_jenks.csv’**
 
 This is the input data file for this repository, and the point at which the code pipeline begins. It can be found in the 'src' folder. 
 It is a fully processed dataset. Every causative factor has already been extracted, discretized, and merged into a single table, one row per sample point (raster pixel location).
