@@ -12,4 +12,3 @@ catboost
 shap
 jenkspy
 joblib
-pyproj
