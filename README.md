@@ -39,13 +39,16 @@ The workflow includes:
 
 # Repository Contents
 
+All code and data files can be found in the 'src' folder.
+
 | Script | Description |
 |---------|-------------|
 | **Data.py** | Rainfall data pipeline (30-yr maximum): Tomek link undersampling and SMOTE oversampling train-test splits. |
 | **avg_rainfall.py** | Same pipeline using 30-yr average rainfall as an alternative factor. |
-| **Undersampling-algos.py** | Trains & tunes all 8 classifiers on the undersampled data; generates susceptibility probability maps and G-scores. |
-| **Oversampling-algos.py** | Trains & tunes all 8 classifiers on the oversampled data; generates susceptibility probability maps and G-scores. |
-| **plots.py** | Generates the figures and validation plots used for analysing model performance and susceptibility class distributions. |
+| **Undersampling-algos.py** | Trains & tunes all 8 classifiers on the undersampled data. |
+| **Oversampling-algos.py** | Trains & tunes all 8 classifiers on the oversampled data. |
+| **analysis.py** | Computes SHAP feature importance and G-scores for the top-3 models. |
+| **plots.py** | Generates the validation plots used for analysing model performance and susceptibility class distributions. |
 | **vulnerability.py** | Computes economic vulnerability (Degree of Loss × monetary value) per land-cover element. |
 | **riskmap.py** | Integrates hazard and vulnerability layers to generate the final landslide risk map. |
 
@@ -56,11 +59,9 @@ Scripts are exploratory (# %% cell-based), with hard-coded paths — shared for 
 
 Raw inputs (IMD rainfall NetCDF, causative-factor rasters, landslide inventory) are not included due to size/data-sharing restrictions.
 
-These raw datasets were preprocessed (for example: IMD NetCDF → daily GeoTIFFs → yearly/30yr rasters, reprojection/resampling, clipping) before being used by the scripts.
+These raw datasets were preprocessed (for example: IMD NetCDF → daily GeoTIFFs → yearly/30yr rasters, reprojection/resampling, clipping) and before being used by the scripts.
 
-Note on coordinates: some input CSVs use column names `Latitude` / `Longitude` while actually
-containing projected easting/northing values (they were effectively flipped). The scripts
-treat `Latitude` as Easting and `Longitude` as Northing when sampling/clipping to handle this.
+`analysis.py` writes its outputs (SHAP tables/plots, probability maps, Jenks-classified maps, G-score summaries) to a `feature/` directory, created automatically if it doesn't exist. This is also where `plots.py` looks for its input files.
 
 ---
 
@@ -71,7 +72,7 @@ QGIS 3.40 or later.
 
 Main packages:
 
-numpy, pandas, geopandas, rasterio, xarray, shapely, jenkspy, scikit-learn, imbalanced-learn, xgboost, catboost, lightgbm, matplotlib, plus GDAL (gdalwarp).
+numpy, pandas, geopandas, rasterio, xarray, shapely, jenkspy, scikit-learn, imbalanced-learn, xgboost, catboost, lightgbm, shap, matplotlib, plus GDAL (gdalwarp).
 
 It's recommended to use a virtual environment before running any of the scripts:
 
@@ -107,7 +108,7 @@ It is a fully processed dataset. Every causative factor has already been extract
 
 The full dataset used to generate the results reported in the manuscript contains 1,218,552 total samples, of which 5,928 are landslide pixels and 1,212,624 are non-landslide pixels (~205:1 class imbalance). Because this is a subset, the class distribution and any metrics reproduced from this file will not exactly match the published results. 
 
-‘Data.py’ and ‘avg_rainfall.py’ both take this CSV directly as input and carry out class-imbalance handling. ‘Undersampling-algos.py’ and ‘Oversampling-algos.py’ further carry out model training/tuning, evaluation, and susceptibility-map generation. ‘plots.py,’ ‘vulnerability.py,’ and ‘riskmap.py’ consume outputs generated further downstream.
+‘Data.py’ and ‘avg_rainfall.py’ both take this CSV directly as input and carry out class-imbalance handling. ‘Undersampling-algos.py’ and ‘Oversampling-algos.py’ further carry out model training/tuning, and evaluation. 'analysis.py' generates SHAP feature importance plots, susceptibility files, and G-scores. ‘plots.py,’ ‘vulnerability.py,’ and ‘riskmap.py’ consume outputs generated further downstream.
 
 Column reference
 
@@ -146,9 +147,10 @@ The scripts are intended to be executed in approximately the following order:
 1. `Data.py`
 2. `avg_rainfall.py` (alternatively to Data.py)
 3. `Undersampling-algos.py` or `Oversampling-algos.py`
-4. `plots.py`
-5. `vulnerability.py`
-6. `riskmap.py`
+4. `analysis.py`
+5. `plots.py`
+6. `vulnerability.py`
+7. `riskmap.py`
 
 ---
 
