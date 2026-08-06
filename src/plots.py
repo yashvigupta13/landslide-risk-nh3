@@ -17,7 +17,7 @@ def compute_ratios_from_csv(
     # Safety check
     assert len(sus_df) == len(proc_df), "Row mismatch between CSVs"
 
-    # ---------- FIGURE 42: landslide pixel ratio ----------
+    # --------- FIGURE : landslide pixel ratio ---------
     # Identify pixels that experienced landslides and get their susceptibility classes
     landslide_mask = proc_df[landslide_col] == 2
     ls_classes = sus_df.loc[landslide_mask, class_col]
@@ -26,7 +26,7 @@ def compute_ratios_from_csv(
     ls_counts = ls_classes.value_counts().reindex(CLASS_ORDER, fill_value=0)
     ls_ratio = (ls_counts / ls_counts.sum()) * 100
 
-    # ---------- FIGURE 43: study area ratio ----------
+    # ---------- FIGURE : study area ratio ----------
     # Compute percentage area covered by each susceptibility class (study area baseline)
     area_counts = sus_df[class_col].value_counts().reindex(CLASS_ORDER, fill_value=0)
     area_ratio = (area_counts / area_counts.sum()) * 100
